@@ -26,7 +26,7 @@ import re
 from abc import ABC, abstractmethod
 
 from .context_store import ContextStore
-from .types import ProposedAction, Span
+from .types import ProposedAction, SourceType, Span, TrustLevel
 
 # Cheap, phrasing-independent hint that a span contains an instruction. Note:
 # this is NOT an injection classifier -- we are not judging whether text is
@@ -135,6 +135,64 @@ class AttributionPropagation(Propagation):
         return sorted(just)
 
 
+class ProvenanceChainPropagation(Propagation):
+    """Fail-closed on *unexplained* provenance -- the taint-laundering defense.
+
+    Attribution is defeated by laundering: an attacker gets a trusted-looking
+    transform (a summarizer tool) to restate an injected instruction and severs
+    the derivation link, so the laundered span *looks* first-party and the model
+    attributes its action there.
+
+    The insight here: trust in any model-/tool-derived span must be backed by an
+    intact **chain of custody**. A span that claims first-party trust but records
+    no derivation -- while untrusted content it could have laundered from is
+    present in the same context -- cannot prove it is not laundered. So we refuse
+    to credit its trust: we treat such a span as UNTRUSTED for the purpose of
+    justifying a sink (fail-closed on a broken chain).
+
+    Concretely, `justify()` returns the attributed span(s) *plus* every
+    derived-looking span whose chain of custody is missing while untrusted
+    content coexists. The policy engine's normal trust check then blocks it. This
+    keeps attribution's low false-block rate on honest workflows (where derived
+    spans DO record their parents, or the justification is the user span) while
+    closing the laundering gap that plain attribution leaves open.
+    """
+
+    name = "provenance_chain"
+
+    def __init__(self):
+        self._attr = AttributionPropagation(widen_to_dataflow=False)
+
+    def justify(self, action: ProposedAction, store: ContextStore) -> list[int]:
+        just: set[int] = set(self._attr.justify(action, store))
+        untrusted_ids = [
+            s.span_id for s in store.all()
+            if store.effective_trust(s.span_id) < TrustLevel.SEMI_TRUSTED
+        ]
+        if not untrusted_ids:
+            return sorted(just)
+        # Does any span we're relying on (or any first-party-looking transform in
+        # context) have a BROKEN chain of custody -- i.e. it claims trusted/
+        # first-party status but records no derivation, so we cannot prove it was
+        # not laundered from the untrusted content that coexists with it?
+        broken_chain = any(
+            s.provenance.source_type in _DERIVED_SOURCES
+            and not s.derived_from
+            and s.trust >= TrustLevel.SEMI_TRUSTED
+            for s in store.all()
+        )
+        if broken_chain:
+            # Fail closed: conservatively attribute the action to the untrusted
+            # content. Those spans are below any sink bar, so the guard blocks --
+            # closing the laundering gap that plain attribution leaves open,
+            # without structural's broad false-block cost (this only triggers
+            # when an unexplained transform coexists with untrusted content).
+            just.update(untrusted_ids)
+        return sorted(just)
+
+
+_DERIVED_SOURCES = {SourceType.TOOL_RESULT}
+
 _STOPWORDS = {
     "the", "a", "an", "to", "of", "and", "or", "for", "in", "on", "at", "is",
     "this", "that", "please", "with", "your", "you", "it", "as", "be", "by",
@@ -143,4 +201,5 @@ _STOPWORDS = {
 STRATEGIES = {
     "structural": StructuralPropagation,
     "attribution": AttributionPropagation,
+    "provenance_chain": ProvenanceChainPropagation,
 }

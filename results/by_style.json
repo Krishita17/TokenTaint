@@ -22,5 +22,11 @@
     "indirect": 1.0,
     "obfuscated": 1.0,
     "laundered": 1.0
+  },
+  "tokentaint_provenance_chain": {
+    "direct": 1.0,
+    "indirect": 1.0,
+    "obfuscated": 1.0,
+    "laundered": 1.0
   }
 }

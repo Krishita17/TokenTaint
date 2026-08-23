@@ -54,5 +54,19 @@
       "obfuscated": 1.0,
       "laundered": 1.0
     }
+  },
+  "tokentaint_provenance_chain": {
+    "attack_prevention_rate": 1.0,
+    "prevention_given_attempted": 1.0,
+    "false_block_rate": 0.0,
+    "n_attacks": 400,
+    "n_attempted": 345,
+    "n_benign": 800,
+    "by_style": {
+      "direct": 1.0,
+      "indirect": 1.0,
+      "obfuscated": 1.0,
+      "laundered": 1.0
+    }
   }
 }

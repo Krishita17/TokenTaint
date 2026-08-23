@@ -14,11 +14,17 @@ injection's phrasing.
 """
 from .agent import Agent, LLMAgent, SimulatedAgent
 from .audit import AuditLog, render_block_alert
+from .capabilities import Capability, CapabilityAuthority
 from .context_store import ContextStore
 from .firewall import Firewall, TokenTaintDefense
+from .integrity import ProvenanceSigner, SignedContextStore, SignedProvenance
 from .labeler import Labeler
 from .policy import SinkGuard, make_guard
-from .propagation import AttributionPropagation, StructuralPropagation
+from .propagation import (
+    AttributionPropagation,
+    ProvenanceChainPropagation,
+    StructuralPropagation,
+)
 from .scenario import Scenario
 from .tools import Tool, ToolRegistry, default_registry
 from .types import (
@@ -42,6 +48,12 @@ __all__ = [
     "make_guard",
     "StructuralPropagation",
     "AttributionPropagation",
+    "ProvenanceChainPropagation",
+    "Capability",
+    "CapabilityAuthority",
+    "ProvenanceSigner",
+    "SignedContextStore",
+    "SignedProvenance",
     "Scenario",
     "Agent",
     "SimulatedAgent",

@@ -25,10 +25,12 @@ FIGS = os.path.join(HERE, "..", "docs", "figures")
 
 # colorblind-safe palette
 C = {"no_defense": "#8c8c8c", "classifier": "#d55e00",
-     "tokentaint_structural": "#0072b2", "tokentaint_attribution": "#009e73"}
+     "tokentaint_structural": "#0072b2", "tokentaint_attribution": "#009e73",
+     "tokentaint_provenance_chain": "#cc79a7"}
 LABEL = {"no_defense": "No defense", "classifier": "Classifier baseline",
          "tokentaint_structural": "TokenTaint (structural)",
-         "tokentaint_attribution": "TokenTaint (attribution)"}
+         "tokentaint_attribution": "TokenTaint (attribution)",
+         "tokentaint_provenance_chain": "TokenTaint (provenance-chain)"}
 
 
 def _load(name):
@@ -60,13 +62,13 @@ def fig2(by_style):
     styles = ["direct", "indirect", "obfuscated", "laundered"]
     names = list(by_style.keys())
     x = range(len(styles))
-    w = 0.2
-    fig, ax = plt.subplots(figsize=(9, 5))
+    w = 0.16
+    fig, ax = plt.subplots(figsize=(10, 5))
     for i, name in enumerate(names):
         vals = [by_style[name][s] for s in styles]
         ax.bar([xx + i * w for xx in x], vals, w, color=C[name], label=LABEL[name],
                edgecolor="black", linewidth=0.4)
-    ax.set_xticks([xx + 1.5 * w for xx in x])
+    ax.set_xticks([xx + (len(names) - 1) / 2 * w for xx in x])
     ax.set_xticklabels([s.capitalize() for s in styles])
     ax.set_ylabel("Attack-prevention rate")
     ax.set_ylim(0, 1.08)
@@ -80,23 +82,24 @@ def fig2(by_style):
 
 def fig3(prop):
     styles = ["direct", "indirect", "obfuscated", "laundered"]
-    strat = ["tokentaint_structural", "tokentaint_attribution"]
+    strat = ["tokentaint_structural", "tokentaint_attribution", "tokentaint_provenance_chain"]
     x = range(len(styles))
-    w = 0.35
-    fig, ax = plt.subplots(figsize=(8, 5))
+    w = 0.26
+    fig, ax = plt.subplots(figsize=(9, 5))
     for i, name in enumerate(strat):
         vals = [prop[name][s] for s in styles]
         ax.bar([xx + i * w for xx in x], vals, w, color=C[name], label=LABEL[name],
                edgecolor="black", linewidth=0.4)
-    ax.set_xticks([xx + 0.5 * w for xx in x])
+    ax.set_xticks([xx + w for xx in x])
     ax.set_xticklabels([s.capitalize() for s in styles])
     ax.set_ylabel("Attack-prevention rate")
     ax.set_ylim(0, 1.08)
     fbr = prop.get("_false_block", {})
-    sub = "  |  false-block rate: " + ", ".join(
-        f"{LABEL[k].split('(')[1][:-1]}={v:.2f}" for k, v in fbr.items())
-    ax.set_title("Structural vs. attribution propagation" + sub, fontsize=11, weight="bold")
-    ax.legend(fontsize=9)
+    sub = "false-block rate — " + ",  ".join(
+        f"{LABEL[k].split('(')[1][:-1]}: {v:.2f}" for k, v in fbr.items())
+    ax.set_title("Propagation strategies: prevention by injection style\n" + sub,
+                 fontsize=11, weight="bold")
+    ax.legend(fontsize=8, loc="lower center", ncol=3)
     ax.grid(True, axis="y", alpha=0.3)
     fig.tight_layout()
     fig.savefig(os.path.join(FIGS, "fig3_propagation_compare.png"), dpi=150)
@@ -109,6 +112,8 @@ def fig4(launder):
             label="Structural", linewidth=2)
     ax.plot(launder["effort"], launder["attribution"], "-s", color=C["tokentaint_attribution"],
             label="Attribution", linewidth=2)
+    ax.plot(launder["effort"], launder["provenance_chain"], "-^",
+            color=C["tokentaint_provenance_chain"], label="Provenance-chain (new)", linewidth=2)
     ax.set_xlabel("Attacker laundering effort  (severing the provenance chain) →")
     ax.set_ylabel("Attack-prevention rate")
     ax.set_title("Tier-3: taint-laundering arms race", fontsize=13, weight="bold")

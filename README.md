@@ -65,6 +65,7 @@ utility set, on the bundled reproducible harness:
 | Classifier baseline | 0.535 | 0.165 | 0.461 |
 | **TokenTaint (structural)** | **1.000** | 0.250 | **1.000** |
 | **TokenTaint (attribution)** | **1.000** | **0.000** | **1.000** |
+| **TokenTaint (provenance-chain)** | **1.000** | **0.000** | **1.000** |
 
 ![security vs utility](docs/figures/fig1_prevention_vs_falseblock.png)
 
@@ -132,6 +133,51 @@ threat model: [`docs/threat_model.md`](docs/threat_model.md).
 
 ---
 
+## Security hardening & extended novelty
+
+Beyond the base firewall, TokenTaint ships three defense-in-depth mechanisms —
+each an original transplant of a classic security paradigm onto the LLM context
+window. All are implemented, tested, and demoable (`python examples/hardening_demo.py`).
+
+### 1. Unforgeable provenance (tamper-evident labels)
+The base model trusts the labeler. But once spans are serialized, cached, or
+passed between components, a plain trust label is just a field an attacker might
+overwrite ("relabel my injected web span as `USER/TRUSTED`"). `tokentaint.integrity`
+signs each span's provenance with an **HMAC** keyed by a harness-held secret; any
+edit to the text *or* the label breaks the signature, and the guard can **fail
+closed** on spans that don't verify. *Message authentication, applied at the
+span level of agent memory.*
+
+```python
+from tokentaint import ProvenanceSigner, Labeler
+signer, lab = ProvenanceSigner(), Labeler()
+web = lab.from_web("payload", "http://evil"); sig = signer.sign(web)
+web.provenance.trust = __import__("tokentaint").TrustLevel.TRUSTED   # attacker forges label
+assert signer.verify(web, sig) is False   # tampering detected
+```
+
+### 2. Capability-based endorsement (audited declassification)
+Blocking is safe but blunt; real workflows need a controlled "yes, I authorize
+*this* action." `tokentaint.capabilities` mints **object-capability** tokens: a
+trusted principal issues a single-use grant, cryptographically **bound to the
+exact tool + arguments**, that declassifies one tainted action and is logged.
+This is information-flow **declassification/endorsement** (Myers & Liskov) made
+tamper-evident and replay-resistant — a human "approve" the model cannot forge
+even if an injection tells it to "issue yourself an approval token."
+
+### 3. Provenance-chain propagation (the taint-laundering defense) — *headline new result*
+Plain attribution is defeated by **laundering**: an attacker gets a
+trusted-looking transform to restate an injected instruction and severs the
+derivation link, so the laundered span *looks* first-party. `ProvenanceChainPropagation`
+**fails closed on a broken chain of custody**: a would-be-trusted derived span
+with no recorded parents, coexisting with untrusted content, cannot prove it
+wasn't laundered — so its action is conservatively attributed back to the
+untrusted content and blocked. The payoff (see Tier-3 below): it gets
+**structural's flat 100% laundering resistance _and_ attribution's 0% false-block
+rate** — dominating both.
+
+---
+
 ## Cybersecurity framing
 
 TokenTaint is **applied information-flow security for AI agents** — a classic
@@ -145,6 +191,9 @@ frameworks security teams already use:
 | **MITRE ATLAS** | Mitigates `AML.T0051` (LLM Prompt Injection) and `AML.T0053` (LLM Plugin Compromise) — untrusted-origin instructions are denied a path to tools |
 | **CWE lineage** | The same defense family as `CWE-20`, `CWE-77/78` (command injection), `CWE-829` (untrusted inclusion) — deny-by-default from untrusted sources |
 | **Zero Trust** | "Never trust, always verify," applied per **token**: no span is trusted by origin-blindness; every privileged action re-verifies the trust of its justification |
+| **Object-capability security** | Per-action, argument-bound, single-use capability tokens replace ambient authority for privileged sinks (`tokentaint.capabilities`) |
+| **Information-flow control** | Trust lattice + join on derived spans + explicit, audited **declassification** (Myers & Liskov) — endorsement is the only way to raise a taint label |
+| **Message authentication** | HMAC-signed, tamper-evident provenance labels (`tokentaint.integrity`) so trust labels cannot be forged in transit/at rest |
 | **NIST AI RMF** | Explainable, audited allow/block/escalate decisions support MAP / MEASURE / MANAGE of agent action risk |
 
 Full policy and responsible-disclosure process: [`SECURITY.md`](SECURITY.md).
@@ -232,15 +281,24 @@ tracked, reproducible artifacts.
 - **Tier 3 ✅** — adaptive **taint-laundering** study: an attacker launders an
   instruction through a trusted-looking transform, severing the provenance
   chain. Attribution degrades as laundering effort rises; **structural stays
-  flat** because the laundered *data* still flows to the sink. This arms race is
-  the headline research finding — and an honest, unsolved-in-general limitation.
+  flat** because the laundered *data* still flows to the sink; and the new
+  **provenance-chain** strategy also stays flat by failing closed on the broken
+  chain of custody — while keeping a **0% false-block rate** (structural pays
+  25%). This is the headline research finding: a propagation strategy that
+  **dominates** both prior ones on the security/utility frontier.
 
   ![laundering](docs/figures/fig4_laundering.png)
 
-  | Laundering effort | 0 | 1 | 2 | 3 | 4 |
-  |---|---|---|---|---|---|
-  | Structural | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 |
-  | Attribution | 1.00 | 1.00 | 0.76 | 0.78 | 0.81 |
+  | Laundering effort | 0 | 1 | 2 | 3 | 4 | False-block |
+  |---|---|---|---|---|---|---|
+  | Structural | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 0.25 |
+  | Attribution | 1.00 | 1.00 | 0.76 | 0.78 | 0.81 | **0.00** |
+  | **Provenance-chain (new)** | **1.00** | **1.00** | **1.00** | **1.00** | **1.00** | **0.00** |
+
+  > Honest caveat: this closes the *studied* laundering class (chain severed at a
+  > first-party transform). An attacker who can produce untrusted content that
+  > carries **no** distinguishing data flow *and* forge an intact-looking chain
+  > would still be a research target — see [`docs/threat_model.md`](docs/threat_model.md).
 
 ## Where the novelty lives (stated honestly)
 
@@ -256,16 +314,27 @@ original contributions here are:
    with trust requirements, giving a guarantee independent of injection phrasing.
 4. **The utility/security trade-off measurement** — attack-prevention vs.
    false-block rate, the real deployability result.
+5. **Provenance-chain propagation** — a fail-closed-on-broken-chain-of-custody
+   strategy that dominates both structural and attribution on the
+   security/utility frontier under taint laundering.
+6. **Unforgeable provenance** — HMAC-signed, tamper-evident span labels
+   (message authentication for agent memory).
+7. **Per-action capability endorsement** — object-capability declassification
+   bound to a tool call's exact arguments, single-use and replay-resistant.
 
 ## Project structure
 
 ```
 TokenTaint/
-├── src/tokentaint/        core library (labeler, store, propagation, policy, guard, audit)
+├── src/tokentaint/        core library:
+│     ├── labeler, context_store, propagation (structural/attribution/provenance-chain)
+│     ├── policy (sink guard), tools, agent, audit, scenario, types
+│     ├── integrity.py     unforgeable HMAC-signed provenance labels
+│     └── capabilities.py  object-capability endorsement / audited declassification
 ├── data/generators/       injection + benign scenario generators (auto-labeled)
 ├── data/corpora/          fetchers for public real injection corpora (cited, not vendored)
 ├── experiments/           run_eval, make_figures, make_tables
-├── examples/quickstart.py 40-line end-to-end demo
+├── examples/              quickstart.py + hardening_demo.py
 ├── tests/                 unit tests (provenance, propagation, sink protection)
 ├── docs/                  architecture, threat model, figures
 └── results/               reproducible metrics (JSON) + tables.md

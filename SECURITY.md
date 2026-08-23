@@ -14,6 +14,9 @@ vulnerability.
 | **CWE** | Transplants classic taint/injection defenses: `CWE-20` Improper Input Validation, `CWE-77/78` Command Injection, `CWE-829` Inclusion of Untrusted Functionality — reframed for the context window |
 | **NIST AI RMF** | Supports **MAP/MEASURE/MANAGE** for agent action risk via explainable, audited allow/block decisions |
 | **Zero Trust** | "Never trust, always verify" applied to *tokens*: no context is trusted by origin-blindness; every privileged action re-verifies the trust of its justification |
+| **Object-capability security** | Privileged sinks gated by unforgeable, per-action, single-use capability tokens rather than ambient authority (`tokentaint.capabilities`) |
+| **Information-flow control** | Trust lattice, join-on-derivation, and explicit **audited declassification** (Myers & Liskov) — a taint label rises only via a logged endorsement |
+| **Message authentication (HMAC)** | Tamper-evident provenance labels (`tokentaint.integrity`); a forged or edited label fails verification and the guard fails closed |
 
 ## Security model (short version)
 

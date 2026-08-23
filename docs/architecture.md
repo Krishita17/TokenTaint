@@ -72,6 +72,19 @@ Sink `required_trust` is declared per tool (`tokentaint.tools`): `send_email`,
 `make_payment`, `execute_code` require `TRUSTED`; `write_file` requires
 `SEMI_TRUSTED`. Adjust to taste — the guard is a numeric comparison.
 
+## Hardening layer (defense in depth)
+
+- **`tokentaint.integrity`** — `ProvenanceSigner` / `SignedContextStore` attach
+  an HMAC over each span (text + label + derivation). `verify_all()` returns any
+  span whose signature fails, so a guard can treat forged/edited labels as
+  UNTRUSTED (fail closed).
+- **`tokentaint.capabilities`** — `CapabilityAuthority` mints single-use,
+  argument-bound capability tokens. `SinkGuard(authority=…)` accepts a valid
+  endorsement as an audited **declassification** of one tainted action.
+- **`ProvenanceChainPropagation`** — a third strategy that fails closed on a
+  broken chain of custody, closing the taint-laundering gap that plain
+  attribution leaves open (Tier-3 study).
+
 ## Extending
 
 - **Add a tool**: `registry.register(Tool(name, desc, required_trust, handler, is_sink))`.

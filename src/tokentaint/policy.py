@@ -26,6 +26,7 @@ class SinkGuard:
         registry: ToolRegistry,
         propagation: Propagation,
         escalate_instead_of_block: bool = True,
+        authority=None,
     ):
         self.registry = registry
         self.propagation = propagation
@@ -34,6 +35,11 @@ class SinkGuard:
         # utility (the human can say yes) while still stopping autonomous
         # injection-driven actions.
         self.escalate = escalate_instead_of_block
+        # Optional CapabilityAuthority. If set, a tainted sink call carrying a
+        # valid capability endorsement (a logged declassification by a trusted
+        # principal) is allowed -- this is how human-in-the-loop "approve"
+        # becomes a tamper-evident, single-use grant instead of a soft prompt.
+        self.authority = authority
 
     def evaluate(self, action: ProposedAction, store: ContextStore) -> PolicyResult:
         tool = self.registry.get(action.tool_name)
@@ -63,6 +69,21 @@ class SinkGuard:
                 reason="justification clears required trust",
                 required_trust=bar,
             )
+
+        # Tainted -- but a valid capability endorsement can declassify this one
+        # action. The grant is verified against the authority's secret key, is
+        # bound to these exact arguments, is single-use, and is logged.
+        if self.authority is not None and action.endorsement is not None:
+            ok, why = self.authority.verify(action, action.endorsement)
+            if ok and action.endorsement.granted_trust >= bar:
+                self.authority.spend(action.endorsement)
+                return PolicyResult(
+                    Decision.ALLOW,
+                    action,
+                    reason=(f"declassified by capability from "
+                            f"'{action.endorsement.principal}' (single-use)"),
+                    required_trust=bar,
+                )
 
         decision = Decision.ESCALATE if self.escalate else Decision.BLOCK
         return PolicyResult(

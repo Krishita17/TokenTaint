@@ -100,6 +100,10 @@ class ProposedAction:
     arguments: dict
     justification_span_ids: list[int] = field(default_factory=list)
     rationale: str = ""
+    # An optional capability token endorsing this exact action, minted by a
+    # trusted principal (see capabilities.py). Typed loosely to avoid a circular
+    # import; the guard verifies it against a CapabilityAuthority.
+    endorsement: Optional[object] = None
 
 
 class Decision(enum.Enum):

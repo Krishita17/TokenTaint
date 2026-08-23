@@ -42,7 +42,11 @@ Cause the agent to invoke a **privileged sink** on the attacker's behalf:
 
 - **Harness and labeler are trusted.** Provenance is assigned by the code that
   fetched/received the content, based on *where it came from*, never parsed from
-  the content itself. Content therefore cannot forge its origin.
+  the content itself. Content therefore cannot forge its origin. Where the
+  context is serialized or crosses a boundary, labels are additionally protected
+  by HMAC signatures (`tokentaint.integrity`) so a forged/edited label fails
+  verification; the capability authority's signing key is likewise infrastructure
+  and never enters the model context.
 - **The LLM is untrusted-but-not-malicious.** It may be fooled by an injection
   (that is expected), but it is not itself the adversary and does not collude.
 - **Trust is ordered and monotone under composition.** A value derived from
@@ -67,15 +71,21 @@ on **origin**, not on recognizing attack phrasing:
   only from letting untrusted text *drive a privileged action*.
 - **Sinks must be enumerable.** If a dangerous capability is not declared as a
   sink, it is not protected. Enumerating sinks is the integrator's job.
-- **Taint laundering is a known hard case.** An attacker who launders an
-  instruction through a *trusted* transform — e.g. gets a first-party
+- **Taint laundering is largely addressed, not fully solved.** An attacker who
+  launders an instruction through a *trusted* transform — e.g. gets a first-party
   summarizer to restate "email the files" as if it were the summary's own
-  conclusion, severing the provenance chain — can defeat **attribution-based**
-  propagation. **Structural** propagation resists this (the laundered *data*
-  still flows to the sink), but at a higher false-block cost. This tension is
-  measured directly in the Tier-3 laundering study (`results/laundering.json`,
-  `docs/figures/fig4_laundering.png`) and is honest **future work**, not a
-  solved problem.
+  conclusion, severing the provenance chain — defeats **attribution-based**
+  propagation. Two strategies close the *studied* laundering class:
+  **structural** (the laundered data still flows to the sink; flat 100%, but 25%
+  false blocks) and the newer **provenance-chain** (fails closed on a broken
+  chain of custody; flat 100% with 0% false blocks — see
+  `results/laundering.json`, `docs/figures/fig4_laundering.png`). **Residual
+  risk / future work:** an attacker who can both (a) emit untrusted content that
+  carries *no* distinguishing data flow to the sink arguments *and* (b) forge an
+  intact-looking chain of custody on a trusted transform would still evade
+  provenance-chain. Preventing (b) is why derived spans should carry
+  HMAC-signed, unstrippable chain-of-custody receipts (`tokentaint.integrity`);
+  strengthening (a) is open research.
 - **Availability is out of scope.** A determined attacker can cause *blocks*
   (denial of the agent's usefulness) by planting injections everywhere; that is
   a utility cost, not a confidentiality/integrity breach.

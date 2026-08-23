@@ -45,6 +45,7 @@ def _defenses(registry):
         ClassifierDefense(seed=1),
         TokenTaintDefense(registry, strategy="structural", escalate=False),
         TokenTaintDefense(registry, strategy="attribution", escalate=False),
+        TokenTaintDefense(registry, strategy="provenance_chain", escalate=False),
     ]
 
 
@@ -133,13 +134,13 @@ def run_all():
         json.dump(prop, f, indent=2)
 
     # laundering study (Tier 3): prevention vs effort for both strategies
-    launder = {"structural": [], "attribution": [], "effort": []}
+    launder = {"structural": [], "attribution": [], "provenance_chain": [], "effort": []}
     for effort in range(0, 5):
         suite = generate_injection_suite(n_per_cell=20, seed=7, laundering_effort=effort)
         # only laundered-style scenarios that carry an injection
         suite = [s for s in suite if s.injection_style == "laundered" and s.has_injection]
         fr = _propose_once(suite, agent)
-        for strat in ("structural", "attribution"):
+        for strat in ("structural", "attribution", "provenance_chain"):
             d = TokenTaintDefense(registry, strategy=strat, escalate=False)
             prevented = total = 0
             for sc, store, action in fr:

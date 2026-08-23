@@ -15,7 +15,8 @@ RESULTS = os.path.join(HERE, "..", "results")
 
 LABEL = {"no_defense": "No defense", "classifier": "Classifier baseline",
          "tokentaint_structural": "TokenTaint (structural)",
-         "tokentaint_attribution": "TokenTaint (attribution)"}
+         "tokentaint_attribution": "TokenTaint (attribution)",
+         "tokentaint_provenance_chain": "TokenTaint (provenance-chain)"}
 STYLES = ["direct", "indirect", "obfuscated", "laundered"]
 
 
@@ -46,7 +47,8 @@ def laundering(l) -> str:
     rows = ["| Laundering effort | " + " | ".join(str(e) for e in l["effort"]) + " |",
             "|---|" + "---|" * len(l["effort"]),
             "| Structural | " + " | ".join(f"{v:.2f}" for v in l["structural"]) + " |",
-            "| Attribution | " + " | ".join(f"{v:.2f}" for v in l["attribution"]) + " |"]
+            "| Attribution | " + " | ".join(f"{v:.2f}" for v in l["attribution"]) + " |",
+            "| Provenance-chain (new) | " + " | ".join(f"{v:.2f}" for v in l["provenance_chain"]) + " |"]
     return "\n".join(rows)
 
 

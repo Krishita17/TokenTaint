@@ -9,6 +9,10 @@ taint-tracking for the context window, not another injection classifier.
 ![python](https://img.shields.io/badge/python-3.9%2B-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![deps](https://img.shields.io/badge/runtime%20deps-none-brightgreen)
+![OWASP LLM01](https://img.shields.io/badge/OWASP%20LLM01-Prompt%20Injection-red)
+![MITRE ATLAS](https://img.shields.io/badge/MITRE%20ATLAS-AML.T0051-orange)
+![Zero Trust](https://img.shields.io/badge/model-Zero%20Trust%20for%20tokens-blueviolet)
+![defensive security](https://img.shields.io/badge/security-defensive-brightgreen)
 
 > **One-line pitch:** a firewall for LLM agents that tags every token with its
 > source of trust and blocks instructions from untrusted origins from triggering
@@ -125,6 +129,30 @@ threat model: [`docs/threat_model.md`](docs/threat_model.md).
 | **Indirect** (2nd-order) | a *tool result* the page caused | payload arrives via `fetch_comments` | ✅ (provenance) |
 | **Obfuscated** | base64 / homoglyph / spacing | classifier-evading encoding | ✅ (phrasing-independent) |
 | **Laundered** | restated by a trusted-looking transform | summarizer echoes the instruction | ✅ structural · ⚠️ attribution (Tier-3) |
+
+---
+
+## Cybersecurity framing
+
+TokenTaint is **applied information-flow security for AI agents** — a classic
+appsec discipline (taint tracking untrusted input to dangerous sinks) transplanted
+onto the newest attack surface, the LLM context window. It aligns with the
+frameworks security teams already use:
+
+| Framework | How TokenTaint maps |
+|---|---|
+| **OWASP Top 10 for LLM Apps** | Directly targets **LLM01: Prompt Injection** (direct + indirect); reduces **LLM06: Excessive Agency** and **LLM02: Sensitive Information Disclosure** by gating the *action*, not the text |
+| **MITRE ATLAS** | Mitigates `AML.T0051` (LLM Prompt Injection) and `AML.T0053` (LLM Plugin Compromise) — untrusted-origin instructions are denied a path to tools |
+| **CWE lineage** | The same defense family as `CWE-20`, `CWE-77/78` (command injection), `CWE-829` (untrusted inclusion) — deny-by-default from untrusted sources |
+| **Zero Trust** | "Never trust, always verify," applied per **token**: no span is trusted by origin-blindness; every privileged action re-verifies the trust of its justification |
+| **NIST AI RMF** | Explainable, audited allow/block/escalate decisions support MAP / MEASURE / MANAGE of agent action risk |
+
+Full policy and responsible-disclosure process: [`SECURITY.md`](SECURITY.md).
+
+**Blue-team value:** every decision is logged with the offending origin and
+reason (`tokentaint.audit`), giving SOC/detection-engineering teams a structured
+signal — *which untrusted source attempted which sink* — instead of an opaque
+model refusal.
 
 ---
 

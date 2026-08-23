@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security bypass (private)
+    url: https://github.com/Krishita17/TokenTaint/security/advisories/new
+    about: For guard bypasses, provenance forgery, or new taint-laundering classes — please disclose privately.

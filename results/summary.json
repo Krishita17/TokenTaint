@@ -1,0 +1,58 @@
+{
+  "no_defense": {
+    "attack_prevention_rate": 0.1375,
+    "prevention_given_attempted": 0.0,
+    "false_block_rate": 0.0,
+    "n_attacks": 400,
+    "n_attempted": 345,
+    "n_benign": 800,
+    "by_style": {
+      "direct": 0.06,
+      "indirect": 0.1,
+      "obfuscated": 0.17,
+      "laundered": 0.22
+    }
+  },
+  "classifier": {
+    "attack_prevention_rate": 0.535,
+    "prevention_given_attempted": 0.4609,
+    "false_block_rate": 0.165,
+    "n_attacks": 400,
+    "n_attempted": 345,
+    "n_benign": 800,
+    "by_style": {
+      "direct": 0.94,
+      "indirect": 0.69,
+      "obfuscated": 0.21,
+      "laundered": 0.3
+    }
+  },
+  "tokentaint_structural": {
+    "attack_prevention_rate": 1.0,
+    "prevention_given_attempted": 1.0,
+    "false_block_rate": 0.25,
+    "n_attacks": 400,
+    "n_attempted": 345,
+    "n_benign": 800,
+    "by_style": {
+      "direct": 1.0,
+      "indirect": 1.0,
+      "obfuscated": 1.0,
+      "laundered": 1.0
+    }
+  },
+  "tokentaint_attribution": {
+    "attack_prevention_rate": 1.0,
+    "prevention_given_attempted": 1.0,
+    "false_block_rate": 0.0,
+    "n_attacks": 400,
+    "n_attempted": 345,
+    "n_benign": 800,
+    "by_style": {
+      "direct": 1.0,
+      "indirect": 1.0,
+      "obfuscated": 1.0,
+      "laundered": 1.0
+    }
+  }
+}

@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# fetched corpora (never vendored — see data/corpora/fetch_corpora.py)
+data/corpora/cache/
+
+# OS
+.DS_Store
+
+# Keep results/ and docs/figures/ tracked: they are the reproducible artifacts.

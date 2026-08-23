@@ -1,0 +1,26 @@
+{
+  "no_defense": {
+    "direct": 0.06,
+    "indirect": 0.1,
+    "obfuscated": 0.17,
+    "laundered": 0.22
+  },
+  "classifier": {
+    "direct": 0.94,
+    "indirect": 0.69,
+    "obfuscated": 0.21,
+    "laundered": 0.3
+  },
+  "tokentaint_structural": {
+    "direct": 1.0,
+    "indirect": 1.0,
+    "obfuscated": 1.0,
+    "laundered": 1.0
+  },
+  "tokentaint_attribution": {
+    "direct": 1.0,
+    "indirect": 1.0,
+    "obfuscated": 1.0,
+    "laundered": 1.0
+  }
+}

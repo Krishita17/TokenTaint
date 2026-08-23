@@ -1,0 +1,18 @@
+{
+  "tokentaint_structural": {
+    "direct": 1.0,
+    "indirect": 1.0,
+    "obfuscated": 1.0,
+    "laundered": 1.0
+  },
+  "tokentaint_attribution": {
+    "direct": 1.0,
+    "indirect": 1.0,
+    "obfuscated": 1.0,
+    "laundered": 1.0
+  },
+  "_false_block": {
+    "tokentaint_structural": 0.25,
+    "tokentaint_attribution": 0.0
+  }
+}

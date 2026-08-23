@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use TokenTaint, please cite it as below."
+title: "TokenTaint: A Provenance-Tracking Firewall for LLM Agent Prompt Injection"
+authors:
+  - family-names: "Choksi"
+    given-names: "Krishita Sanjay"
+version: 0.1.0
+date-released: 2026-08-22
+license: MIT
+repository-code: "https://github.com/Krishita17/TokenTaint"
+keywords:
+  - prompt injection
+  - LLM agent security
+  - taint analysis
+  - information-flow control
+abstract: >
+  TokenTaint defends LLM agents against prompt injection by labeling every span
+  of the context window with its source of trust, propagating that taint through
+  the agent's reasoning, and refusing to let a privileged tool ("sink") fire when
+  its justification traces to an untrusted origin — a structural guarantee that
+  does not depend on recognizing the injection's phrasing.

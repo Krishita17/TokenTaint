@@ -1,0 +1,21 @@
+flowchart TD
+    U[User — trusted]:::trusted -->|instruction| L
+    T[Tool results — semi-trusted]:::semi -->|data| L
+    W[Web / docs / email — untrusted]:::untrusted -->|content| L
+
+    L[Source classifier / labeler<br/>tags every span by origin + trust]:::fw --> CS
+    CS[Tainted context store<br/>span ↔ provenance ledger]:::fw --> RT
+    RT[LLM agent runtime<br/>reasoning + proposed tool calls]:::fw --> PP
+    PP[Taint propagation engine<br/>which spans justified this action?]:::fw --> PG
+    PG{Policy / sink guard<br/>privileged sink?<br/>tainted justification?}:::fw
+
+    PG -->|clears trust bar| A[Allowed action]:::ok
+    PG -->|tainted| B[Blocked + explained<br/>or escalated to user]:::block
+    PG -.decision + reason.-> AUD[Audit log]:::fw
+
+    classDef trusted fill:#d4edda,stroke:#28a745,color:#000;
+    classDef semi fill:#fff3cd,stroke:#ffc107,color:#000;
+    classDef untrusted fill:#f8d7da,stroke:#dc3545,color:#000;
+    classDef fw fill:#e7f1ff,stroke:#0072b2,color:#000;
+    classDef ok fill:#d4edda,stroke:#28a745,color:#000;
+    classDef block fill:#f8d7da,stroke:#dc3545,color:#000;

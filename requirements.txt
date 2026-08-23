@@ -1,0 +1,4 @@
+# Core library has ZERO runtime dependencies (standard library only).
+# These are needed only to regenerate figures and run the test suite.
+matplotlib>=3.5
+pytest>=7.0
